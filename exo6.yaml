@@ -1,0 +1,236 @@
+openapi: 3.0.3
+info:
+  title: User Profile API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+
+paths:
+  /users:
+    get:
+      summary: Liste des utilisateurs
+      tags: [Users]
+      responses:
+        '200':
+          description: Liste des profils utilisateur
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProfile'
+              examples:
+                sample:
+                  value:
+                    - identifier: "u123"
+                      first_name: Alice
+                      last_name: Ravelonirina
+                      birthdate: 1990-05-20
+                      email: alice@example.com
+                      address_street: Rue 123
+                      address_city: Antananarivo
+                      address_country: MG
+                      address_postal_code: "101"
+                      needs_newsletter: true
+                      language: fr
+                    - identifier: "u124"
+                      first_name: Bob
+                      last_name: Martin
+                      birthdate: 1988-07-10
+                      email: bob@example.com
+                      address_street: Avenue 456
+                      address_city: Paris
+                      address_country: FR
+                      address_postal_code: "75000"
+                      needs_newsletter: false
+                      language: eng
+    post:
+      summary: Créer un utilisateur
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserProfile'
+            examples:
+              createSample:
+                value:
+                  first_name: Claire
+                  last_name: Dupont
+                  birthdate: 1995-03-12
+                  email: claire@example.com
+                  address_street: Rue des fleurs
+                  address_city: Lyon
+                  address_country: FR
+                  address_postal_code: "69000"
+                  needs_newsletter: true
+                  language: fr
+      responses:
+        '201':
+          description: Profil utilisateur créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              examples:
+                createdSample:
+                  value:
+                    identifier: "u125"
+                    first_name: Claire
+                    last_name: Dupont
+                    birthdate: 1995-03-12
+                    email: claire@example.com
+                    address_street: Rue des fleurs
+                    address_city: Lyon
+                    address_country: FR
+                    address_postal_code: "69000"
+                    needs_newsletter: true
+                    language: fr
+
+  /users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+    put:
+      summary: Mettre à jour un utilisateur (remplacement complet)
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfile'
+      responses:
+        '200':
+          description: Profil utilisateur mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /users/{id}/email:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+    put:
+      summary: Mettre à jour uniquement l'email
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+            examples:
+              updateEmail:
+                value:
+                  email: new.email@example.com
+      responses:
+        '200':
+          description: Email mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /users/{id}/address:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+    put:
+      summary: Mettre à jour l’adresse
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAddress'
+            examples:
+              updateAddress:
+                value:
+                  address_street: Nouvelle rue
+                  address_city: Marseille
+                  address_country: FR
+                  address_postal_code: "13000"
+      responses:
+        '200':
+          description: Adresse mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+components:
+  parameters:
+    userId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Identifiant de l’utilisateur
+
+  schemas:
+    # Schéma complet
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/CreateUserProfile'
+        - type: object
+          properties:
+            identifier:
+              type: string
+              description: Identifiant unique généré par le serveur
+          required: [identifier]
+
+    # Schéma pour la création
+    CreateUserProfile:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        birthdate:
+          type: string
+          format: date
+        email:
+          type: string
+          format: email
+        address_street:
+          type: string
+        address_city:
+          type: string
+        address_country:
+          type: string
+        address_postal_code:
+          type: string
+        needs_newsletter:
+          type: boolean
+        language:
+          type: string
+          enum: [mg, fr, eng]
+      required:
+        [first_name, last_name, birthdate, email, address_city, address_country, language]
+
+    # Schéma pour mise à jour complète (PUT)
+    UpdateUserProfile:
+      allOf:
+        - $ref: '#/components/schemas/CreateUserProfile'
+
+    # Schéma isolé pour adresse
+    UserAddress:
+      type: object
+      properties:
+        address_street:
+          type: string
+        address_city:
+          type: string
+        address_country:
+          type: string
+        address_postal_code:
+          type: string
+      required: [address_city, address_country, address_postal_code]
